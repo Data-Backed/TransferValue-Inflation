@@ -1,15 +1,16 @@
 # Football Transfer Fee Inflation & Era-Translation Model
 
-A hedonic pricing model that (1) measures football transfer fee inflation across the top 5 European leagues (2004–2025) and (2) predicts what any player's transfer fee would be in a different year — accounting for market inflation, age, position, and performance quality.
+This is a hedonic pricing model that (1) measures football transfer fee inflation across the top 5 European leagues (2000–2025) and (2) predicts what any player's transfer fee would be in a different year — accounting for market inflation, age, position, and performance quality.
 
-Built with an actuarial approach: separating price-level trend from player quality, being explicit about sample-size limitations, and refusing to produce a number when the underlying data doesn't support one.
+Built through an actuarial lense: it separates price-level trend from player quality, explicitly stating its sample-size limitations, and only produces a fee if there is data to provide one.
 
 ---
 
-## 1. What this project does
+# 1. What this project does
 
-- **Inflation index**: quantifies how transfer fees have moved over time, controlling for player age, position, league, and transfer window — not just raw fee averages, which would be skewed by which players happened to move each year.
-- **Era-translation engine**: `predict_value(player_name, target_year, source_year)` — give it a player, the year you want to value them in, and (optionally) which real career snapshot to use as the anchor. Works for players with a real transfer fee on record *and*, with lower confidence, for players who never had one (free transfers, moves outside the top 5 leagues).
+- **Inflation index**: 
+controls for player agee, position,league, and transfer window when quantifying how football transfers have changed over time
+- **Era-translation engine**: `predict_value(player_name, target_year, source_year)` - input a player and the year you want to value them in. It works for players with a real recorded transfer fee and, with lower confidence, players who have never had a transfer/only had moves outside the top 5 leagues
 
 ---
 
@@ -36,11 +37,11 @@ Starting from ~93,500 raw Transfermarkt transfer records:
 | Exclude loans | ~45,700 | Loans aren't "sales" and would distort fee modeling |
 | Exclude free transfers (fee = 0) | ~20,800 confirmed-fee rows | Kept separately, not discarded |
 | Deduplicate cross-listed transfers | ~20,832 | Same transfer often logged once per club |
-| Drop years with <30 confirmed transfers | final modeling set | 2001–2003 excluded — sample too thin for stable year coefficients |
+| Drop years with less than 30 confirmed transfers | final modeling set | 2001–2003 excluded — sample too thin for stable year coefficients |
 
 **Fee confidence tiers**: every row is tagged `confirmed`, `likely_free` (fee = 0), or `unknown` (fee missing). Only `confirmed` rows are used in the fee model.
 
-**Name matching**: player names are compared with accents stripped (`unidecode`) so "Mbappé" and "Mbappe" match — without this, any accented name silently failed to match.
+**Name matching**: accents have no effect on the player searching (`unidecode`) so "Mbappé" and "Mbappe" match — without this, any accented name silently failed to match.
 
 ---
 
@@ -71,7 +72,7 @@ A separate, leaner version of this index — used inside the era-translation eng
 **Path 2: No-anchor fallback (players with no fee on record anywhere)**
 1. Rank the player's raw performance output against real players in the same position group, within a multi-year "era window" (target year ± 3, shifted to stay inside the dataset near either edge).
 2. **If below the 95th percentile for their era**: take the mean fee among real transfers at or above that percentile, within the era window.
-3. **If at or above the 95th percentile (a genuine outlier)**: escalate to an all-time comparison — rank the player against every player-season in the same position group across the full dataset, not just their own era. Map that all-time percentile onto a literal rank in an inflation-adjusted "most expensive transfer ever" leaderboard for that position (99th percentile → rank #1, 95th percentile → roughly rank #7, interpolated in between). The outlier gets the *maximum* fee in the qualifying tier, not the average — "the best gets the biggest," not a diluted mean.
+3. **If at or above the 95th percentile (a genuine outlier)**: escalate to an all-time comparison - rank the player against every player-season in the same position group across the full dataset, not just their own era. Map that all-time percentile onto a literal rank in an inflation-adjusted "most expensive transfer ever" leaderboard for that position (99th percentile → rank #1, 95th percentile → roughly rank #7, interpolated in between). The outlier gets the *maximum* fee in the qualifying tier, not the average - "the best gets the biggest," not a diluted mean.
 4. **If no tracked performance data exists at all** (see limitations — this affects most defenders before ~2013): refuses to produce a number rather than defaulting to a misleading neutral guess.
 
 ### 4c. Composite Performance Score
@@ -105,7 +106,7 @@ Documented explicitly rather than papered over — these are real, specific gaps
 - **The defensive metric underrates elite positional defenders.** Tackles + interceptions rewards *committed* defending, not prevention. Virgil van Dijk's peak 2017 season scores at only the 11th percentile on this metric despite being widely regarded as one of the best defenders of his generation — his game relies on positioning and aerial control rather than high tackle volume. This is a real, named blind spot, not a bug.
 - **Some well-known players are simply absent.** Players like Antoine Griezmann and Lionel Messi have gaps or complete absences in the confirmed-fee dataset — usually because their major moves were free transfers, loans, or had undisclosed fees. Messi is handled via the no-anchor fallback; some others are not recoverable without additional data sources.
 - **Position mapping in the no-anchor fallback is an approximation.** FBref's broad position groups (GK/DEF/MID/FWD) are mapped to a single representative Transfermarkt-style label (e.g. all midfielders → "Central Midfield") for prediction purposes, rather than the player's true specific role.
-- **Ambiguous name matching picks one candidate, not the "right" one.** A search for a common surname (e.g. "Silva") returns whichever matching player's record is found first — it does not disambiguate or ask for clarification.
+- **Ambiguous names are resolved interactively.** A search for a common surname (e.g. "Silva", which has 34 matches, or Rodri, with 47 matches) won't pick the name that happens to be sorted first. `predict_value.py` checks every name against the full list of distinct players (grouped by Transfermarkt's `player_id`) before running the valuation: if only one match exists, it proceeds automatically; if there are more than one match, it prints a numbered list of every candidate - name, nationality, position, years active - and asks which player you wanted before producing a result. This was an early bug (a search for "Rodri" originally retuened Chema Rodriguez instead of the former Manchester City Midfielder) that is now fixed.
 - **Non-Latin-script name transliteration isn't fully covered.** Accent-stripping fixes Mbappé-style cases but doesn't resolve inconsistent Latin romanizations of names originally in other scripts.
 - **Implausible age interpolation is refused, not guessed.** If interpolating a player's age to a requested `source_year` would put them under 15 or over 42, the function refuses outright rather than returning a nonsense figure.
 
@@ -117,7 +118,7 @@ Documented explicitly rather than papered over — these are real, specific gaps
 Anchored on his real €222M PSG move; index-scaled and quality-premium-adjusted for 2025's price level.
 
 **Lionel Messi, 2025 valuation (no fee anchor)**
-No confirmed transfer fee exists for Messi in this dataset (his major moves were frees). His 2015 performance profile is ranked against the all-time forward pool, detected as a genuine outlier (>95th percentile even against all-time peers), and valued via the inflation-adjusted all-time leaderboard rather than a diluted era-average.
+Messi's major moves were free tranfers, meaning there is no transfer data for him. His 2015 performance profile is ranked against the all-time forward pool, detected as a genuine outlier (>95th percentile even against all-time peers), and valued via the inflation-adjusted all-time leaderboard rather than a diluted era-average.
 
 **Jamie Carragher, 2025 valuation — refused**
 No transfer fee on record (homegrown academy product) and no tracked defensive data exists for his entire career (2000–2013, predating detailed event tracking). The model correctly declines to produce a number: *"There is no available transfer data or match stats for this player, unable to calculate fee."*
@@ -145,6 +146,8 @@ python predict_value.py   # the era-translation engine - edit the test cases at 
 ```
 
 `fetch_stats.py` requires Google Chrome installed locally (used by `soccerdata`'s scraper to bypass bot detection).
+
+**Note on `predict_value.py`**: running it starts an interactive prompt - type a player name, a target year, and a source year, If the name matches more than one player (e.g "Silva", "Rodri"), you'll be shown a numbered list of candidated - with nationality, position, and years active - and asked to pick the right one before tha valuation runs. Type `quit` to exit.
 
 ---
 

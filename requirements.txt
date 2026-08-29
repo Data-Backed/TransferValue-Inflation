@@ -1,0 +1,9 @@
+﻿pandas
+numpy
+statsmodels
+matplotlib
+scikit-learn
+soccerdata
+rapidfuzz
+unidecode
+pyarrow

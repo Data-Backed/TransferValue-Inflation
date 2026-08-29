@@ -1,12 +1,12 @@
-﻿# Large/regenerable data - not needed in the repo, scripts rebuild these
-data/raw/
-data/clean/*.parquet
-transfermarkt-data/
-
-# Python
+﻿transfermarkt-data/
+data/raw/all_transfers_raw.parquet
 __pycache__/
 *.pyc
-
-# OS junk
+downloaded_files/
 .DS_Store
 Thumbs.db
+
+# Unrelated design assets
+Green Connection Icon Internet Logo.png
+Green and White Simple Football News Instagram Post.zip
+Green and White Simple Football News Instagram Post/
