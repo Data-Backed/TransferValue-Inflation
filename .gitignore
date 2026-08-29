@@ -1,0 +1,12 @@
+﻿# Large/regenerable data - not needed in the repo, scripts rebuild these
+data/raw/
+data/clean/*.parquet
+transfermarkt-data/
+
+# Python
+__pycache__/
+*.pyc
+
+# OS junk
+.DS_Store
+Thumbs.db
