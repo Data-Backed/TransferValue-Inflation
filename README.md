@@ -6,8 +6,6 @@ Built through an actuarial lense: it separates price-level trend from player qua
 
 ---
 
-
-# 1. What this project does
 ### 1. What this project does
 - **Inflation index**: 
 controls for player agee, position,league, and transfer window when quantifying how football transfers have changed over time
