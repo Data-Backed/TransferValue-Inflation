@@ -1,4 +1,4 @@
-# Football Transfer Fee Inflation & Era-Translation Model
+### Football Transfer Fee Inflation & Era-Translation Model
 
 A hedonic pricing model that (1) measures football transfer fee inflation across the top 5 European leagues (2004–2025) and (2) predicts what any player's transfer fee would be in a different year — accounting for market inflation, age, position, and performance quality.
 
@@ -6,14 +6,14 @@ Built with an actuarial approach: separating price-level trend from player quali
 
 ---
 
-## 1. What this project does
+### 1. What this project does
 
 - **Inflation index**: quantifies how transfer fees have moved over time, controlling for player age, position, league, and transfer window — not just raw fee averages, which would be skewed by which players happened to move each year.
 - **Era-translation engine**: `predict_value(player_name, target_year, source_year)` — give it a player, the year you want to value them in, and (optionally) which real career snapshot to use as the anchor. Works for players with a real transfer fee on record *and*, with lower confidence, for players who never had one (free transfers, moves outside the top 5 leagues).
 
 ---
 
-## 2. Data Sources
+### 2. Data Sources
 
 | Source | What it provides | Coverage |
 |---|---|---|
@@ -26,7 +26,7 @@ Both sources required cleaning quirks worth knowing about if you extend this pro
 
 ---
 
-## 3. Data Cleaning & Scope Decisions
+### 3. Data Cleaning & Scope Decisions
 
 Starting from ~93,500 raw Transfermarkt transfer records:
 
@@ -44,9 +44,9 @@ Starting from ~93,500 raw Transfermarkt transfer records:
 
 ---
 
-## 4. Methodology
+### 4. Methodology
 
-### 4a. The Inflation Index
+#### 4a. The Inflation Index
 
 A hedonic regression, fit on ~20,800 confirmed transfers:
 
@@ -60,7 +60,7 @@ The exponentiated year coefficients form the index — the relative price level 
 
 A separate, leaner version of this index — used inside the era-translation engine — deliberately **excludes `market_value`**. Early in development, including `market_value` alongside year fixed effects corrupted the index: since `market_value` itself trends upward with inflation, controlling for it strips out most of the genuine trend signal from the year coefficients, producing a nonsensical "deflating" index for elite players. Removing it costs R² (down to 0.193) but keeps the index directionally correct — a deliberate accuracy-for-correctness tradeoff.
 
-### 4b. Era-Translation — Two Paths
+#### 4b. Era-Translation — Two Paths
 
 **Path 1: Fee-anchored (used whenever a real transfer fee exists)**
 1. Find the player's transfer record nearest to the requested `source_year`.
@@ -74,7 +74,7 @@ A separate, leaner version of this index — used inside the era-translation eng
 3. **If at or above the 95th percentile (a genuine outlier)**: escalate to an all-time comparison — rank the player against every player-season in the same position group across the full dataset, not just their own era. Map that all-time percentile onto a literal rank in an inflation-adjusted "most expensive transfer ever" leaderboard for that position (99th percentile → rank #1, 95th percentile → roughly rank #7, interpolated in between). The outlier gets the *maximum* fee in the qualifying tier, not the average — "the best gets the biggest," not a diluted mean.
 4. **If no tracked performance data exists at all** (see limitations — this affects most defenders before ~2013): refuses to produce a number rather than defaulting to a misleading neutral guess.
 
-### 4c. Composite Performance Score
+#### 4c. Composite Performance Score
 
 Computed as a **percentile rank within the player's own season and position group** — not a raw stat — so it's automatically comparable across eras regardless of how playing styles or stat magnitudes have shifted:
 
@@ -88,7 +88,7 @@ Because this is a *percentile within season*, its distribution is stable across 
 
 ---
 
-## 5. Validation
+### 5. Validation
 
 Holdout test (15% of confirmed transfers, held out before fitting):
 
@@ -97,7 +97,7 @@ Holdout test (15% of confirmed transfers, held out before fitting):
 
 ---
 
-## 6. Known Limitations
+### 6. Known Limitations
 
 Documented explicitly rather than papered over — these are real, specific gaps found during testing, not hypothetical caveats:
 
@@ -111,7 +111,7 @@ Documented explicitly rather than papered over — these are real, specific gaps
 
 ---
 
-## 7. Worked Examples
+### 7. Worked Examples
 
 **Neymar, 2017 real transfer → predicted 2025 value**
 Anchored on his real €222M PSG move; index-scaled and quality-premium-adjusted for 2025's price level.
@@ -127,7 +127,7 @@ Requesting his real 2018 anchor interpolated back to 2007 would imply an age of 
 
 ---
 
-## 8. How to Run
+### 8. How to Run
 
 ```bash
 pip install pandas numpy statsmodels matplotlib scikit-learn soccerdata rapidfuzz unidecode
@@ -148,7 +148,7 @@ python predict_value.py   # the era-translation engine - edit the test cases at 
 
 ---
 
-## 9. Tech Stack
+### 9. Tech Stack
 
 - **Data**: `pandas`, `pyarrow` (Parquet storage)
 - **Modeling**: `statsmodels` (OLS hedonic regression)
@@ -157,7 +157,7 @@ python predict_value.py   # the era-translation engine - edit the test cases at 
 - **Validation**: `scikit-learn` (train/test split)
 - **Visualization**: `matplotlib`
 
-## 10. Attribution
+### 10. Attribution
 
 - Transfer data: [eordo/transfermarkt-data](https://github.com/eordo/transfermarkt-data), sourced from Transfermarkt.
 - Performance data: [FBref](https://fbref.com), via the [soccerdata](https://github.com/probberechts/soccerdata) library.
